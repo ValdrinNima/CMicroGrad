@@ -11,7 +11,13 @@ typedef struct Value {
     double data;
     double grad;
     struct Value **prev;
+    size_t prev_count;
 } Value;
+
+enum Operation {
+    ADD,
+    MULT
+};
 
 
 void value_print(Value *value, bool print_children);
@@ -19,18 +25,38 @@ Value *value_add(Value *self, Value *other);
 Value *value_mult(Value *self, Value *other);
 void _value_add_backward(Value *self, Value *other, double upstream_grad);
 void _value_mult_backward(Value *self, Value *other, double upstream_grad);
+void build_topo(Value* v, int visited[], Value* topo[], size_t* topoIndex);
+void backprop(Value *output);
+
+#define MAX_VALUES 100
 
 int main(void) {
     Value a = init_value(2.0f);
-    Value b = {.data=4.0f};
-    Value *c = value_mult(&a, &b);
-    value_print(&a, false);
-    value_print(&b, false);
-    value_print(c, true);
-    _value_mult_backward(&a, &b, 1);
-    value_print(&a, false);
-    value_print(&b, false);
-    return 0;
+    Value b = init_value(4.0f);
+    Value *ab = value_mult(&a, &b);
+
+    Value c = init_value(2.0f);
+    Value d = init_value(4.0f);
+    Value *cd = value_mult(&c, &d);
+
+    Value *res = value_mult(ab, cd);
+
+    backprop(res);
+
+    printf("HELLO\n");
+}
+
+void backprop(Value *output) {
+    printf("WE ARE AT THE TOP LEVEL\n");
+    value_print(output, false);
+    while (output->prev != NULL) {
+        _value_mult_backward(output->prev[0], output->prev[1], 1);
+        for (size_t i = 0; i < output->prev_count; i++) {
+            backprop(output->prev[i]);
+            printf("HELLO\n");
+        }
+
+    }
 }
 
 void value_print(Value *value, bool print_children) {
@@ -47,6 +73,7 @@ Value *value_add(Value *self, Value *other) {
     Value *out = malloc(sizeof(Value));
     out->data = self->data + other->data;
     out->prev = malloc(2 * sizeof(Value *));
+    out->prev_count = 2;
     out->prev[0] = self;
     out->prev[1] = other;
     // TODO: This should be freed at some point
@@ -63,6 +90,7 @@ Value *value_mult(Value *self, Value *other) {
     Value *out = malloc(sizeof(Value));
     out->data = self->data * other->data;
     out->prev = malloc(2 * sizeof(Value *));
+    out->prev_count = 2;
     out->prev[0] = self;
     out->prev[1] = other;
     // TODO: This should be freed at some point
