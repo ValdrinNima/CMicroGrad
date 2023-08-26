@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define init_value(d) {.data=d, .grad=0.0f, .prev=NULL} // TODO: Move this to a function instead of a macro
+#define init_value(d) {.data=d, .prev_count=0, .grad=0.0f, .prev=NULL} // TODO: Move this to a function instead of a macro
                                                         // TODO: Add a condition which checks what type
 
 typedef struct Value {
@@ -31,9 +31,13 @@ void backprop(Value *output);
 #define MAX_VALUES 100
 
 int main(void) {
-    Value a = init_value(2.0f);
-    Value b = init_value(4.0f);
-    Value *ab = value_mult(&a, &b);
+
+    Value _a = init_value(10.0f);
+    Value _b = init_value(5.0f);
+    Value *a = value_mult(&_a, &_b);
+
+    Value b = init_value(3.0f);
+    Value *ab = value_mult(a, &b);
 
     Value c = init_value(2.0f);
     Value d = init_value(4.0f);
@@ -43,19 +47,47 @@ int main(void) {
 
     backprop(res);
 
-    printf("HELLO\n");
+    printf("____\n");
+    printf("_a ");
+    value_print(&_a,false);
+    printf("_b ");
+    value_print(&_b,false);
+    printf("*a ");
+    value_print(a,false);
+    printf("b ");
+    value_print(&b,false);
+    printf("ab ");
+    value_print(ab,false);
+    printf("c ");
+    value_print(&c,false);
+    printf("d ");
+    value_print(&d,false);
+    printf("cd ");
+    value_print(cd,false);
 }
 
 void backprop(Value *output) {
-    printf("WE ARE AT THE TOP LEVEL\n");
-    value_print(output, false);
-    while (output->prev != NULL) {
-        _value_mult_backward(output->prev[0], output->prev[1], 1);
-        for (size_t i = 0; i < output->prev_count; i++) {
-            backprop(output->prev[i]);
-            printf("HELLO\n");
-        }
+    Value* queue[100]; // Adjust the size as needed
+    size_t front = 0;
+    size_t rear = 0;
 
+    // Enqueue the output node
+    output->grad = 1;
+    queue[rear++] = output;
+
+    while (front < rear) {
+        Value* current = queue[front++];
+        if (current == NULL || current->prev == NULL) {
+            continue;
+        }
+        _value_mult_backward(current->prev[0], current->prev[1], current->grad);
+        // Enqueue the previous nodes for further traversal
+        for (size_t i = 0; i < current->prev_count; i++) {
+            if (current->prev[i] != NULL) {
+                queue[rear++] = current->prev[i];
+
+            }
+        }
     }
 }
 
