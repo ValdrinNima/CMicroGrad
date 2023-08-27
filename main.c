@@ -30,26 +30,25 @@ void _value_add_backward(Value *self, Value *other, double upstream_grad);
 void _value_mult_backward(Value *self, Value *other, double upstream_grad);
 void build_topo(Value* v, int visited[], Value* topo[], size_t* topoIndex);
 void backprop(Value *output);
-Value *value_create();
-
-#define MAX_VALUES 100
+Value *value_create(double data);
+void value_destroy(Value *value);
 
 int main(void) {
-    Value _a = init_value(10.0f);
-    Value _b = init_value(5.0f);
-    Value *a = value_mult(&_a, &_b);
+    Value *_a = value_create(10.0);
+    Value *_b = value_create(5.0);
+    Value *a = value_add(_a, _b);
 
-    Value f = init_value(7.0f);
-    Value *af = value_mult(&f, a);
+    Value *f = value_create(7.0);
+    Value *af = value_mult(f, a);
 
-    Value b = init_value(3.0f);
-    Value *ab = value_mult(a, &b);
+    Value *b = value_create(3.0);
+    Value *ab = value_mult(a, b);
 
     Value *afb = value_mult(af, ab);
 
-    Value c = init_value(2.0f);
-    Value d = init_value(4.0f);
-    Value *cd = value_mult(&c, &d);
+    Value *c = value_create(2.0);
+    Value *d = value_create(4.0);
+    Value *cd = value_mult(c, d);
 
     Value *res = value_mult(afb, cd);
 
@@ -57,27 +56,28 @@ int main(void) {
 
     printf("____\n");
     printf("_a ");
-    value_print(&_a,false);
+    value_print(_a,false);
     printf("_b ");
-    value_print(&_b,false);
+    value_print(_b,false);
     printf("*a ");
     value_print(a,false);
     printf("f ");
-    value_print(&f,false);
+    value_print(f,false);
     printf("af ");
     value_print(af,false);
     printf("b ");
-    value_print(&b,false);
+    value_print(b,false);
     printf("ab ");
     value_print(ab,false);
-    printf("afb ");
+    printf("afb");
     value_print(afb,false);
     printf("c ");
-    value_print(&c,false);
+    value_print(c,false);
     printf("d ");
-    value_print(&d,false);
+    value_print(d,false);
     printf("cd ");
     value_print(cd,false);
+    value_print(res, false);
 }
 
 void backprop(Value *output) {
@@ -112,28 +112,32 @@ void backprop(Value *output) {
     }
 }
 
-Value* create_value(double data , ...) {
+Value* value_create(double data) {
     Value* new_value = (Value*)malloc(sizeof(Value));
     if (new_value == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-
     // Initialize the fields of the new Value struct
     new_value->data = data;
-    new_value->grad = 0.0; // Default gradient value
+    new_value->grad = 0.0;
+    new_value->prev = NULL;
     new_value->prev_count = 0;
-
-     // Initialize the previous nodes array with provided arguments
-//    va_list args;
-//    va_start(args, data);
-//    for (size_t i = 0; i < prev_count; i++) {
-//        new_value->prev[i] = va_arg(args, Value*);
-//    }
-//    va_end(args);
+    new_value->op = NOOP;
+    new_value->visited = false;
 
     return new_value;
 }
+
+void value_destroy(Value *value) {
+    if (value == NULL) return;
+    if (value->prev != NULL) {
+        free(value->prev);
+    }
+    free(value);
+}
+
+// TODO: Write a function which frees the entire graph given the output node
 
 void value_print(Value *value, bool print_children) {
     printf("Value(%.2f, %.2f)\n", value->data, value->grad);
@@ -153,7 +157,6 @@ Value *value_add(Value *self, Value *other) {
     out->op = ADD;
     out->prev[0] = self;
     out->prev[1] = other;
-    // TODO: This should be freed at some point
     return out;
 }
 
@@ -171,7 +174,6 @@ Value *value_mult(Value *self, Value *other) {
     out->op = MULT;
     out->prev[0] = self;
     out->prev[1] = other;
-    // TODO: This should be freed at some point
     return out;
 }
 
