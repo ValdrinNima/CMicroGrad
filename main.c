@@ -18,6 +18,7 @@ typedef struct Value {
     struct Value **prev;
     size_t prev_count;
     enum Operation op;
+    bool visited;
 } Value;
 
 
@@ -103,9 +104,9 @@ void backprop(Value *output) {
         }
         // Enqueue the previous nodes for further traversal
         for (size_t i = 0; i < current->prev_count; i++) {
-            if (current->prev[i] != NULL) {
+            if (current->prev[i] != NULL && !current->prev[i]->visited) {
+                current->prev[i]->visited = true;
                 queue[rear++] = current->prev[i];
-
             }
         }
     }
