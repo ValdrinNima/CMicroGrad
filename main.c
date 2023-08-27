@@ -5,9 +5,8 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define init_value(d) {.data=d, .prev_count=0, .grad=0.0f, .prev=NULL, .op=0} // TODO: Move this to a function instead of a macro
-                                                        // TODO: Add a condition which checks what type
 enum Operation {
+    NOOP,
     ADD,
     MULT
 };
@@ -91,10 +90,12 @@ void backprop(Value *output) {
 
     while (front < rear) {
         Value* current = queue[front++];
+
         if (current == NULL || current->prev == NULL) {
             continue;
         }
         switch (current->op) {
+            case NOOP: break;
             case ADD:
                 _value_add_backward(current->prev[0], current->prev[1], current->grad);
                 break;
