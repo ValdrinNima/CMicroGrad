@@ -13,6 +13,7 @@ enum Operation {
     DIV,
     POW,
     RELU,
+    SIGMOID
 };
 
 typedef struct Value {
@@ -32,12 +33,14 @@ Value *value_mult(Value *self, Value *other);
 Value *value_div(Value *self, Value *other);
 Value *value_pow(Value *self, Value *other);
 Value *value_relu(Value *self);
+Value *value_sigmoid(Value *self);
 void _value_add_backward(Value *self, Value *other, double upstream_grad);
 void _value_sub_backward(Value *self, Value *other, double upstream_grad);
 void _value_mult_backward(Value *self, Value *other, double upstream_grad);
 void _value_div_backward(Value *self, Value *other, double upstream_grad);
 void _value_pow_backward(Value *self, Value *other, double upstream_grad);
 void _value_relu_backward(Value *self, double upstream_grad);
+void _value_sigmoid_backward(Value *self, double upstream_grad);
 void backprop(Value *output);
 Value *value_create(double data);
 void value_destroy(Value *value);
@@ -225,6 +228,7 @@ void _value_mult_backward(Value *self, Value *other, double upstream_grad){
 Value *value_div(Value *self, Value *other) {
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
+    // TODO: Rewrite this using other operators
     out->data = self->data / other->data;
     out->prev = malloc(2 * sizeof(Value *));
     out->prev_count = 2;
@@ -268,5 +272,20 @@ Value *value_relu(Value *self) {
 }
 
 void _value_relu_backward(Value *self, double upstream_grad){
+    self->grad += (self->data > 0) * upstream_grad;
+}
+
+Value *value_sigmoid(Value *self) {
+    assert((self != NULL) && "Cannot pass null values as operands.");
+    Value *out = malloc(sizeof(Value));
+    out->data = (self->data >= 0) ? self->data : 0;
+    out->prev = malloc(1 * sizeof(Value *));
+    out->prev_count = 1;
+    out->op = RELU;
+    out->prev[0] = self;
+    return out;
+}
+
+void _value_sigmoid_backward(Value *self, double upstream_grad){
     self->grad += (self->data > 0) * upstream_grad;
 }
