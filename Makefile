@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall -Wextra
 INCLUDES=-I/usr/include/SDL2/
-LIBS=-L/usr/lib/x86_64-linux-gnu/cmake/SDL2 -lSDL2 -lSDL2_ttf ./Roboto-Medium.ttf
+LIBS=-L/usr/lib/x86_64-linux-gnu/cmake/SDL2 -lSDL2 -lSDL2_ttf
 
 MATH=-lm
 
