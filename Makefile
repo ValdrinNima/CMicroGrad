@@ -5,16 +5,17 @@ LIBS=-L/usr/lib/x86_64-linux-gnu/cmake/SDL2 -lSDL2 -lSDL2_ttf
 
 MATH=-lm
 
-BIN=main
-SRC=main.c
+BIN_DIR=bin
+TARGET=$(BIN_DIR)/main
+SRC=*.c
 
-all: $(BIN)
+all: $(TARGET)
 
 main: $(SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(BIN) $(SRC) $(LIBS) $(MATH) 
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(TARGET) $(SRC) $(LIBS) $(MATH) 
 
 graph_visualizer: graph_visualizer.c
-	$(CC) $(CLFAGS) $(INCLUDES) -o $@ $< $(LIBS)
+	$(CC) $(CLFAGS) $(INCLUDES) -o $(BIN_DIR)/$@ $< $(LIBS) $(MATH)
 
 clean:
 	rm -f $(BIN)
