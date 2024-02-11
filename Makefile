@@ -7,7 +7,7 @@ MATH=-lm
 
 BIN_DIR=bin
 TARGET=$(BIN_DIR)/main
-SRC=*.c
+SRC=graph_visualizer.c main.c autograd.c
 
 all: $(TARGET)
 
