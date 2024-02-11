@@ -1,7 +1,8 @@
 #include "autograd.h"
 
-void backprop(Value *output) {
-    Value* queue[100]; // Adjust the size as needed
+void backprop(Value *output)
+{
+    Value *queue[100];
     size_t front = 0;
     size_t rear = 0;
 
@@ -9,46 +10,68 @@ void backprop(Value *output) {
     output->grad = 1;
     queue[rear++] = output;
 
-    while (front < rear) {
-        Value* current = queue[front++];
+    while (front < rear)
+    {
+        Value *current = queue[front++];
 
-        if (current == NULL || current->prev == NULL) {
+        if (current == NULL || current->prev == NULL)
+        {
             continue;
         }
-        switch (current->op) {
-            case NOOP: break;
-            case ADD:
-                _value_add_backward(current->prev[0], current->prev[1], current->grad);
-                break;
-            case SUB:
-                _value_sub_backward(current->prev[0], current->prev[1], current->grad);
-                break;
-            case MULT:
-                _value_mult_backward(current->prev[0], current->prev[1], current->grad);
-                break;
-            case DIV:
-                _value_div_backward(current->prev[0], current->prev[1], current->grad);
-                break;
-            case POW:
-                _value_pow_backward(current->prev[0], current->prev[1], current->grad);
-                break;
-            case RELU:
-                _value_relu_backward(current->prev[0], current->grad);
-                break;
+        switch (current->op)
+        {
+        case NOOP:
+            break;
+        case ADD:
+            _value_add_backward(current->prev[0], current->prev[1], current->grad);
+            break;
+        case SUB:
+            _value_sub_backward(current->prev[0], current->prev[1], current->grad);
+            break;
+        case MULT:
+            _value_mult_backward(current->prev[0], current->prev[1], current->grad);
+            break;
+        case DIV:
+            _value_div_backward(current->prev[0], current->prev[1], current->grad);
+            break;
+        case POW:
+            _value_pow_backward(current->prev[0], current->prev[1], current->grad);
+            break;
+        case RELU:
+            _value_relu_backward(current->prev[0], current->grad);
+            break;
+        default:
+            fprintf(stderr, "ERROR: Operation not recognized.");
         }
         // Enqueue the previous nodes for further traversal
-        for (size_t i = 0; i < current->prev_count; i++) {
-            if (current->prev[i] != NULL && !current->prev[i]->visited) {
+        for (size_t i = 0; i < current->prev_count; i++)
+        {
+            if (current->prev[i] != NULL && !current->prev[i]->visited)
+            {
                 current->prev[i]->visited = true;
                 queue[rear++] = current->prev[i];
             }
         }
     }
+    reset_visited(output);
 }
 
-Value* value_create(double data) {
-    Value* new_value = (Value*)malloc(sizeof(Value));
-    if (new_value == NULL) {
+void reset_visited(Value *node) {
+    if (node == NULL) {
+        return;
+    }
+    node->visited = false;
+    for (size_t i = 0; i < node->prev_count; i++){
+        reset_visited(node->prev[i]);
+    }
+    return;
+}
+
+Value *value_create(double data)
+{
+    Value *new_value = (Value *)malloc(sizeof(Value));
+    if (new_value == NULL)
+    {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
@@ -63,9 +86,12 @@ Value* value_create(double data) {
     return new_value;
 }
 
-void value_destroy(Value *value) {
-    if (value == NULL) return;
-    if (value->prev != NULL) {
+void value_destroy(Value *value)
+{
+    if (value == NULL)
+        return;
+    if (value->prev != NULL)
+    {
         free(value->prev);
     }
     free(value);
@@ -73,16 +99,20 @@ void value_destroy(Value *value) {
 
 // TODO: Write a function which frees the entire graph given the output node
 
-void value_print(Value *value, bool print_children) {
+void value_print(Value *value, bool print_children)
+{
     printf("Value(%.2f, %.2f)\n", value->data, value->grad);
-    if (print_children) {
-        for (size_t i = 0; i < 2; i++) { // TODO: Don't hardcode this as 2, because there might be other operators.
-            printf("\t Child %zu: Value(%.2f, %.2f)\n", i ,value->prev[i]->data, value->prev[i]->grad);
+    if (print_children)
+    {
+        for (size_t i = 0; i < 2; i++)
+        { // TODO: Don't hardcode this as 2, because there might be other operators.
+            printf("\t Child %zu: Value(%.2f, %.2f)\n", i, value->prev[i]->data, value->prev[i]->grad);
         }
     }
 }
 
-Value *value_add(Value *self, Value *other) {
+Value *value_add(Value *self, Value *other)
+{
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = self->data + other->data;
@@ -94,12 +124,14 @@ Value *value_add(Value *self, Value *other) {
     return out;
 }
 
-void _value_add_backward(Value *self, Value *other, double upstream_grad){
+void _value_add_backward(Value *self, Value *other, double upstream_grad)
+{
     self->grad += upstream_grad;
     other->grad += upstream_grad;
 }
 
-Value *value_sub(Value *self, Value *other) {
+Value *value_sub(Value *self, Value *other)
+{
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = self->data - other->data;
@@ -111,12 +143,14 @@ Value *value_sub(Value *self, Value *other) {
     return out;
 }
 
-void _value_sub_backward(Value *self, Value *other, double upstream_grad){
+void _value_sub_backward(Value *self, Value *other, double upstream_grad)
+{
     self->grad += upstream_grad;
     other->grad += -1.0 * upstream_grad;
 }
 
-Value *value_mult(Value *self, Value *other) {
+Value *value_mult(Value *self, Value *other)
+{
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = self->data * other->data;
@@ -128,12 +162,14 @@ Value *value_mult(Value *self, Value *other) {
     return out;
 }
 
-void _value_mult_backward(Value *self, Value *other, double upstream_grad){
+void _value_mult_backward(Value *self, Value *other, double upstream_grad)
+{
     self->grad += other->data * upstream_grad;
     other->grad += self->data * upstream_grad;
 }
 
-Value *value_div(Value *self, Value *other) {
+Value *value_div(Value *self, Value *other)
+{
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     // TODO: Rewrite this using other operators
@@ -146,12 +182,14 @@ Value *value_div(Value *self, Value *other) {
     return out;
 }
 
-void _value_div_backward(Value *self, Value *other, double upstream_grad){
+void _value_div_backward(Value *self, Value *other, double upstream_grad)
+{
     self->grad += 1 / other->data * upstream_grad;
     other->grad += self->data * upstream_grad;
 }
 
-Value *value_pow(Value *self, Value *other) {
+Value *value_pow(Value *self, Value *other)
+{
     assert((self != NULL && other != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = pow(self->data, other->data);
@@ -163,12 +201,14 @@ Value *value_pow(Value *self, Value *other) {
     return out;
 }
 
-void _value_pow_backward(Value *self, Value *other, double upstream_grad){
+void _value_pow_backward(Value *self, Value *other, double upstream_grad)
+{
     self->grad += other->data * pow(self->data, other->data - 1) * upstream_grad;
     other->grad += log(self->data) * pow(self->data, other->data) * upstream_grad;
 }
 
-Value *value_relu(Value *self) {
+Value *value_relu(Value *self)
+{
     assert((self != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = (self->data >= 0) ? self->data : 0;
@@ -179,11 +219,13 @@ Value *value_relu(Value *self) {
     return out;
 }
 
-void _value_relu_backward(Value *self, double upstream_grad){
+void _value_relu_backward(Value *self, double upstream_grad)
+{
     self->grad += (self->data > 0) * upstream_grad;
 }
 
-Value *value_sigmoid(Value *self) {
+Value *value_sigmoid(Value *self)
+{
     assert((self != NULL) && "Cannot pass null values as operands.");
     Value *out = malloc(sizeof(Value));
     out->data = (self->data >= 0) ? self->data : 0;
@@ -194,6 +236,7 @@ Value *value_sigmoid(Value *self) {
     return out;
 }
 
-void _value_sigmoid_backward(Value *self, double upstream_grad){
+void _value_sigmoid_backward(Value *self, double upstream_grad)
+{
     self->grad += (self->data > 0) * upstream_grad;
 }
