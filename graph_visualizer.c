@@ -164,7 +164,7 @@ uint32_t render_node(SDL_Renderer *renderer, Value *node, uint32_t x,
 }
 
 void render_text(SDL_Renderer *renderer, uint32_t x, uint32_t y, char *text) {
-  TTF_Font *Sans = TTF_OpenFont("Mono.ttf", 14);
+  TTF_Font *Sans = TTF_OpenFont("Mono.ttf", 32);
   if (!Sans) {
     fprintf(stderr, "Failed to load font: %s\n", TTF_GetError());
     return;
