@@ -154,7 +154,6 @@ uint32_t render_node(SDL_Renderer *renderer, Value *node, uint32_t x,
   if (!(node->prev_count == 0)) {
     SDL_RenderDrawLine(renderer, x, mid_y, x - line_length + radius, mid_y);
     SDL_RenderDrawCircle(renderer, x - line_length, mid_y, radius);
-    render_text(renderer, x, y, "3");
   }
 
   SDL_RenderDrawRect(renderer, &title_block);
